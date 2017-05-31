@@ -12,8 +12,10 @@ const jobRoleSelect  = document.getElementById('title');
 const basicInfo = document.querySelector("fieldset:first-child");
 const designSelect = document.getElementById('design');
 const colorSelect = document.getElementById('color');
+const activitiesSet = document.querySelector(".activities");
 const activities = document.querySelectorAll('.activities label input');
-
+let runningTotal = parseInt(0);
+const paymentSelect = document.getElementById('payment');
 
 function availableColors(designSelected){
     const colorOptions = colorSelect.options;
@@ -57,9 +59,50 @@ function availableColors(designSelected){
 
 
 
+function createTotalPrice(){
+    var span = document.createElement("span");
+    span.className = "totalPrice";
+    span.innerHTML = "Your Total: $0";
+    activitiesSet.appendChild(span);
+    console.log("created");
+}
+
+//Display payment sections based on the payment option chosen in the select menu
+
+function setPaymentOption(selectedPayment){
+    const creditCardPayment = document.getElementById('credit-card');
+    const paypalPayment = document.getElementById('paypal');
+    const bitcoinPayment = document.getElementById('bitcoin');
+
+    // Select Creditcard by default
+    paymentSelect.options[selectedPayment].selected = "selected";
+
+    if(selectedPayment == 1){
+        creditCardPayment.style.display = "";
+        paypalPayment.style.display = "none";
+        bitcoinPayment.style.display = "none";
+    } else if ( selectedPayment == 2 ){
+        creditCardPayment.style.display = "none";
+        paypalPayment.style.display = "";
+        bitcoinPayment.style.display = "none";
+    } else if ( selectedPayment == 3 ){
+        creditCardPayment.style.display = "none";
+        paypalPayment.style.display = "none";
+        bitcoinPayment.style.display = "";
+    } else {
+        creditCardPayment.style.display = "";
+        paypalPayment.style.display = "";
+        bitcoinPayment.style.display = "";
+    }
+}
+
+
+
+
 
 //When the page loads, give focus to the first text field.
 nameInput.focus();
+
 
 //A text field that will be revealed when the "Other" option is selected from the "Job Role dropdown menu"
 jobRoleSelect.addEventListener('change', () =>{
@@ -105,16 +148,65 @@ jobRoleSelect.addEventListener('change', () =>{
 // Some events are at the same time as others.  If the user selects a workshop, don't allow selection of a workshop at 
 // the same date and time you should disable the checkbox and visually indicate that the workshop in the competing time
 // slot isn't available.
+let totalPrice = 0;
+
+createTotalPrice();
+
 for(let i = 0; i < activities.length; i++){
 
 
     activities[i].addEventListener("change", () => {
-      if(i != 0){
         var name = activities[i].parentElement.innerText.split("—")[0];
-        var time = activities[i].parentElement.innerText.split("—")[1].split(",")[0];
-        var price = activities[i].parentElement.innerText.split(",")[1];
+        var selectedTime = activities[i].parentElement.innerText.split("—")[1].split(",")[0];
+        var selectedPrice = parseInt(activities[i].parentElement.innerText.split(",")[1].replace("$", ""));
+        var totalPrice = document.querySelector(".totalPrice");
 
-      }    
-      
+
+        
+        if(activities[i].checked == true){
+        
+            for(let j = 1; j < activities.length; j++){          
+                var time = activities[j].parentElement.innerText.split("—")[1].split(",")[0];
+                
+                    if (time == selectedTime){
+                        //Disable other activities
+                        activities[j].disabled = true;
+                        activities[i].disabled = false;
+                    }
+            }
+
+            runningTotal = parseInt(runningTotal + selectedPrice);
+
+
+        }
+        if(activities[i].checked == false){
+        
+            for(let k = 1; k < activities.length; k++){          
+                var time = activities[k].parentElement.innerText.split("—")[1].split(",")[0];
+                
+                    if (time == selectedTime){
+                        //Enable activities previously disabled.
+                        activities[k].disabled = false;
+                        
+                    }
+            }
+            runningTotal = parseInt(runningTotal - selectedPrice);
+        }
+        
+        totalPrice.innerHTML =  "Your Total: $" + runningTotal;
     });
 }
+
+
+paymentSelect.addEventListener("change", () => {
+    let paymentSelected = paymentSelect.selectedIndex;
+
+    console.log(paymentSelected);
+    setPaymentOption(paymentSelected);
+});
+
+
+
+
+//Set the initial selected payment option to Credit-Card
+setPaymentOption(1);
